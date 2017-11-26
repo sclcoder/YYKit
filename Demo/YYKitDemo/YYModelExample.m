@@ -193,11 +193,12 @@ static void CodingCopyingHashEqualExample() {
 @implementation YYModelExample
 
 - (void)runExample {
+    
     SimpleObjectExample();
-    NestObjectExample();
-    ContainerObjectExample();
-    CustomMapperExample();
-    CodingCopyingHashEqualExample();
+//    NestObjectExample();
+//    ContainerObjectExample();
+//    CustomMapperExample();
+//    CodingCopyingHashEqualExample();
 }
 
 - (void)viewDidLoad {
