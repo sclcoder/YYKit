@@ -1149,7 +1149,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = YY;
-				LastUpgradeCheck = 0900;
+				LastUpgradeCheck = 0910;
 				ORGANIZATIONNAME = ibireme;
 				TargetAttributes = {
 					D97484CF19CAAD2900F46DE1 = {
@@ -1482,6 +1482,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COMPRESS_PNG_FILES = NO;
+				DEVELOPMENT_TEAM = U74G29566D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/**",
@@ -1499,7 +1500,7 @@
 					"$(PROJECT_DIR)/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ibireme.YYKitDemo";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibireme.YYKitDemo;
 				PRODUCT_NAME = YYKitDemo;
 				STRIP_PNG_TEXT = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -1511,6 +1512,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COMPRESS_PNG_FILES = NO;
+				DEVELOPMENT_TEAM = U74G29566D;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/**",
@@ -1527,7 +1529,7 @@
 					"$(PROJECT_DIR)/**",
 				);
 				OTHER_LDFLAGS = "-ObjC";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.ibireme.YYKitDemo";
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibireme.YYKitDemo;
 				PRODUCT_NAME = YYKitDemo;
 				STRIP_PNG_TEXT = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";

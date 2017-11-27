@@ -37,11 +37,15 @@
     label.numberOfLines = 0;
     label.text = @"Tap the image to pause/play\n Slide on the image to forward/rewind";
     [_scrollView addSubview:label];
-    
+    // Gif
     [self addImageWithName:@"niconiconi" text:@"Animated GIF"];
+    // WebP
     [self addImageWithName:@"wall-e" text:@"Animated WebP"];
+    // Png
     [self addImageWithName:@"pia" text:@"Animated PNG (APNG)"];
+    // 多张图
     [self addFrameImageWithText:@"Frame Animation"];
+    // 精灵图
     [self addSpriteSheetImageWithText:@"Sprite Sheet Animation"];
     
     _scrollView.panGestureRecognizer.cancelsTouchesInView = YES;
