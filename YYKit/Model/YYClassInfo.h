@@ -203,7 +203,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding);
 @property (nonatomic, strong, readonly) NSString *name; ///< method name          method名
 @property (nonatomic, assign, readonly) SEL sel; ///< method's selector
 @property (nonatomic, assign, readonly) IMP imp; ///< method's implementation
-///< method's parameter and return types     method的参数和返回类型
+///< method's parameter and return types     method的参数和返回类型encode types
 @property (nonatomic, strong, readonly) NSString *typeEncoding;
  ///< return value's type                    method返回值的encode types
 @property (nonatomic, strong, readonly) NSString *returnTypeEncoding;

@@ -209,6 +209,37 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     
     YYEncodingType type = 0;
     unsigned int attrCount;
+    /**
+     一个属性的所有attribute信息
+     属性类型  name值：T value：变化的
+     编码类型  name值：C(copy) &(strong) W(weak) 空(assign) 等 value：无
+     非/原子性 name值：空(atomic) N(Nonatomic)  value：无
+     变量名称  name值：V  value：变化
+     
+     //属性名
+     const char * name = property_getName(property);
+     //属性描述
+     const char * propertyAttr = property_getAttributes(property);
+     NSLog(@"属性描述为 %s 的 %s ", propertyAttr, name);
+     属性描述为 T@"NSString",&,N,V_myProperty 的 myProperty
+     
+     
+     objc_property_attribute_t * attrs = property_copyAttributeList(property, &attrCount);
+     for (unsigned int j = 0; j < attrCount; j ++) {
+     objc_property_attribute_t attr = attrs[j];
+     const char * name = attr.name;
+     const char * value = attr.value;
+     NSLog(@"属性的描述：%s 值：%s", name, value);
+     }
+     
+     属性的描述：T 值：@"NSString"
+     属性的描述：& 值：
+     属性的描述：N 值：
+     属性的描述：V 值：_myProperty
+     
+     说明：T@"NSString",&,N,V_myProperty 这句是对属性的总体描述，接下来四行是对描述的分解，每个描述特征以逗号作为分隔，所以会有四个描述特征，1、有name为T的value为@"NSString"(即属性为NSString类型), 2、name为&（即编码类型strong）,3、name为N（即非原子性），4、name为V,值为_myProperty（即编译器给我们生成一个成员变量_myProperty）
+     注意：在属性信息中可以看到成员变量信息
+     */
     objc_property_attribute_t *attrs = property_copyAttributeList(property, &attrCount);
     for (unsigned int i = 0; i < attrCount; i++) {
         switch (attrs[i].name[0]) {
@@ -469,6 +500,12 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     // 只允许同时1个线程
     dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
     // 获取曾经解析过的缓存
+    /**
+     关于metaClass
+     UIView *view = [[UIView alloc] init];
+     Class currentClass1 = object_getClass(view); // 获取的UIView这个类对象
+     Class currentClass2 = object_getClass(view.class); // UIView的meta-class
+     */
     YYClassInfo *info = CFDictionaryGetValue(class_isMetaClass(cls) ? metaCache : classCache, (__bridge const void *)(cls));
     if (info && info->_needUpdate) {
         // 如果存在且需要更新，则重新解析class并更新结构体

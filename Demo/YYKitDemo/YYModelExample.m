@@ -22,6 +22,7 @@
 @end
 
 static void SimpleObjectExample() {
+    
     YYBook *book = [YYBook modelWithJSON:@"     \
     {                                           \
        \"name\": \"Harry Potter\",              \
