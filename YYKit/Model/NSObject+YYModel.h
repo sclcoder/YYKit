@@ -342,7 +342,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSDictionary<NSString *, id> *)modelContainerPropertyGenericClass;
 
-/** 根据dic创建不同的对象模型
+/** 根据dic创建不同的对象模
+    本地有不同class的映射
  If you need to create instances of different classes during json->object transform,
  use the method to choose custom class based on dictionary data.
  

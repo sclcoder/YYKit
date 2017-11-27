@@ -36,6 +36,7 @@ typedef NS_ENUM (NSUInteger, YYEncodingNSType) {
 };
 
 /// Get the Foundation class type from property info.
+/// 判断是否是Foundation Class的类型
 static force_inline YYEncodingNSType YYClassGetNSType(Class cls) {
     if (!cls) return YYEncodingTypeNSUnknown;
     if ([cls isSubclassOfClass:[NSMutableString class]]) return YYEncodingTypeNSMutableString;
@@ -317,18 +318,30 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 
 
 /// A property info in object model.
+//  model property的进一步分装
 @interface _YYModelPropertyMeta : NSObject {
     @package
+    //property名
     NSString *_name;             ///< property's name
+    //property的encode解析值
     YYEncodingType _type;        ///< property's type
+    //property的foundation类型
     YYEncodingNSType _nsType;    ///< property's Foundation type
+    //是不是c语言的数字--基础数据类型
     BOOL _isCNumber;             ///< is c number type
+    //property的class
     Class _cls;                  ///< property's class, or nil
+    //property内包含的类class
     Class _genericCls;           ///< container's generic class, or nil if threr's no generic class
+    //property getter方法
     SEL _getter;                 ///< getter, or nil if the instances cannot respond
+    //property setter方法
     SEL _setter;                 ///< setter, or nil if the instances cannot respond
+    //是否可以使用KVC
     BOOL _isKVCCompatible;       ///< YES if it can access with key-value coding
+    //是否是struct并且可以archiver/unarchiver
     BOOL _isStructAvailableForKeyedArchiver; ///< YES if the struct can encoded with keyed archiver/unarchiver
+    //是否包含本地的class转换
     BOOL _hasCustomClassFromDictionary; ///< class/generic class implements +modelCustomClassForDictionary:
     
     /*
@@ -336,10 +349,15 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
      property->keyPath:   _mappedToKey:keyPath _mappedToKeyPath:keyPath(array) _mappedToKeyArray:nil
      property->keys:      _mappedToKey:keys[0] _mappedToKeyPath:nil/keyPath    _mappedToKeyArray:keys(array)
      */
+    //property本地的key mapper的key
     NSString *_mappedToKey;      ///< the key mapped to
+    //property本地的key mapper的key path列表
     NSArray *_mappedToKeyPath;   ///< the key path mapped to (nil if the name is not key path)
+    //property本地的key mapper的key列表
     NSArray *_mappedToKeyArray;  ///< the key(NSString) or keyPath(NSArray) array (nil if not mapped to multiple keys)
+    //property的YYClassPropertyInfo info
     YYClassPropertyInfo *_info;  ///< property's info
+    //同个key的多个property的映射next指针
     _YYModelPropertyMeta *_next; ///< next meta if there are multiple properties mapped to the same key.
 }
 @end
@@ -347,7 +365,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 @implementation _YYModelPropertyMeta
 + (instancetype)metaWithClassInfo:(YYClassInfo *)classInfo propertyInfo:(YYClassPropertyInfo *)propertyInfo generic:(Class)generic {
     
-    // support pseudo generic class with protocol name
+    // support pseudo(假冒的) generic class with protocol name
     if (!generic && propertyInfo.protocols) {
         for (NSString *protocol in propertyInfo.protocols) {
             Class cls = objc_getClass(protocol.UTF8String);
@@ -365,11 +383,16 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     meta->_genericCls = generic;
     
     if ((meta->_type & YYEncodingTypeMask) == YYEncodingTypeObject) {
+        // 是对象类型
+        // 获取foundation class类型
         meta->_nsType = YYClassGetNSType(propertyInfo.cls);
     } else {
+        // 不是对象类型
+        // 判断是否为基础数据类型
         meta->_isCNumber = YYEncodingTypeIsCNumber(meta->_type);
     }
     if ((meta->_type & YYEncodingTypeMask) == YYEncodingTypeStruct) {
+        // 是结构体类型
         /*
          It seems that NSKeyedUnarchiver cannot decode NSValue except these structs:
          */
@@ -393,24 +416,29 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
             [set addObject:@"{UIOffset=dd}"];
             types = set;
         });
-        if ([types containsObject:propertyInfo.typeEncoding]) {
-            meta->_isStructAvailableForKeyedArchiver = YES;
+        if ([types containsObject:propertyInfo.typeEncoding]) { // 属性的typeEncoding是否是以上结构
+            meta->_isStructAvailableForKeyedArchiver = YES; // 可以归档、解档
         }
     }
     meta->_cls = propertyInfo.cls;
     
     if (generic) {
+        // 有类对象
         meta->_hasCustomClassFromDictionary = [generic respondsToSelector:@selector(modelCustomClassForDictionary:)];
+        
     } else if (meta->_cls && meta->_nsType == YYEncodingTypeNSUnknown) {
+        // 没有类对象
         meta->_hasCustomClassFromDictionary = [meta->_cls respondsToSelector:@selector(modelCustomClassForDictionary:)];
     }
     
     if (propertyInfo.getter) {
+        // 这个类的对象能否响应属性的getter方法
         if ([classInfo.cls instancesRespondToSelector:propertyInfo.getter]) {
             meta->_getter = propertyInfo.getter;
         }
     }
     if (propertyInfo.setter) {
+        // 这个类的对象能否响应属性的setter方法
         if ([classInfo.cls instancesRespondToSelector:propertyInfo.setter]) {
             meta->_setter = propertyInfo.setter;
         }
@@ -439,6 +467,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
             case YYEncodingTypeBlock:
             case YYEncodingTypeStruct:
             case YYEncodingTypeUnion: {
+                // 以上类型支持KVC
                 meta->_isKVCCompatible = YES;
             } break;
             default: break;
@@ -476,6 +505,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 
 @implementation _YYModelMeta
 - (instancetype)initWithClass:(Class)cls {
+    // 获取类对象的信息
     YYClassInfo *classInfo = [YYClassInfo classInfoWithClass:cls];
     if (!classInfo) return nil;
     self = [super init];
@@ -509,9 +539,10 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
             NSMutableDictionary *tmp = [NSMutableDictionary new];
             [genericMapper enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
                 if (![key isKindOfClass:[NSString class]]) return;
+                // object_getClass(id)获取类对象isa指向的类--元类
                 Class meta = object_getClass(obj);
                 if (!meta) return;
-                // ?????? 怎样区分是不是MetaClass
+                // 能获取到元类说明是obj类对象
                 if (class_isMetaClass(meta)) {
                     tmp[key] = obj;
                 } else if ([obj isKindOfClass:[NSString class]]) {
@@ -525,23 +556,26 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
         }
     }
     
-    // Create all property metas.
+    // Create all property metas. 所有属性的元数据
     NSMutableDictionary *allPropertyMetas = [NSMutableDictionary new];
     YYClassInfo *curClassInfo = classInfo;
     while (curClassInfo && curClassInfo.superCls != nil) { // recursive parse super class, but ignore root class (NSObject/NSProxy)
-        // ???????
+        //
         for (YYClassPropertyInfo *propertyInfo in curClassInfo.propertyInfos.allValues) {
+            // 跳过不转换的属性
             if (!propertyInfo.name) continue;
             if (blacklist && [blacklist containsObject:propertyInfo.name]) continue;
             if (whitelist && ![whitelist containsObject:propertyInfo.name]) continue;
+            // 获取属性的元数据信息
             _YYModelPropertyMeta *meta = [_YYModelPropertyMeta metaWithClassInfo:classInfo
                                                                     propertyInfo:propertyInfo
-                                                                          generic:genericMapper[propertyInfo.name]];
+                                                                         generic:genericMapper[propertyInfo.name]];
             if (!meta || !meta->_name) continue;
             if (!meta->_getter || !meta->_setter) continue;
             if (allPropertyMetas[meta->_name]) continue;
             allPropertyMetas[meta->_name] = meta;
         }
+        // 继续处理父类
         curClassInfo = curClassInfo.superClassInfo;
     }
     if (allPropertyMetas.count) _allPropertyMetas = allPropertyMetas.allValues.copy;
@@ -552,17 +586,24 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     NSMutableArray *multiKeysPropertyMetas = [NSMutableArray new];
     
     if ([cls respondsToSelector:@selector(modelCustomPropertyMapper)]) {
+        // 自定义属性映射关系
         NSDictionary *customMapper = [(id <YYModel>)cls modelCustomPropertyMapper];
+        
         [customMapper enumerateKeysAndObjectsUsingBlock:^(NSString *propertyName, NSString *mappedToKey, BOOL *stop) {
+            // 获取属性元数据
             _YYModelPropertyMeta *propertyMeta = allPropertyMetas[propertyName];
             if (!propertyMeta) return;
+            // 从字典中移除这个属性元数据
             [allPropertyMetas removeObjectForKey:propertyName];
             
             if ([mappedToKey isKindOfClass:[NSString class]]) {
+                // 如果mappedToKey是字符串
                 if (mappedToKey.length == 0) return;
                 
                 propertyMeta->_mappedToKey = mappedToKey;
+               
                 NSArray *keyPath = [mappedToKey componentsSeparatedByString:@"."];
+                // ？？？？
                 for (NSString *onePath in keyPath) {
                     if (onePath.length == 0) {
                         NSMutableArray *tmp = keyPath.mutableCopy;
@@ -571,10 +612,12 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
                         break;
                     }
                 }
+                // 说明是多级映射
                 if (keyPath.count > 1) {
                     propertyMeta->_mappedToKeyPath = keyPath;
                     [keyPathPropertyMetas addObject:propertyMeta];
                 }
+                // ???
                 propertyMeta->_next = mapper[mappedToKey] ?: nil;
                 mapper[mappedToKey] = propertyMeta;
                 
@@ -635,9 +678,9 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     if (!cls) return nil;
     static CFMutableDictionaryRef cache;
     static dispatch_once_t onceToken;
-    static dispatch_semaphore_t lock; // 使用GCD的信号量保证读写Dic时线程安全
+    static dispatch_semaphore_t lock; // 使用GCD的信号量保证读写Dic时线程安全 锁
     dispatch_once(&onceToken, ^{
-        // 创建一个字典
+        // 缓存字典
         cache = CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
         // 创建一个信号量 计数为1
         lock = dispatch_semaphore_create(1);
@@ -1475,8 +1518,9 @@ static NSString *ModelDescription(NSObject *model) {
     // 检测dictionary
     if (!dictionary || dictionary == (id)kCFNull) return nil;
     if (![dictionary isKindOfClass:[NSDictionary class]]) return nil;
-    // 获取类型
-    Class cls = [self class];
+
+    Class cls = [self class]; // 获取类对象
+    // 模型的元信息（优先从缓存中获取、没有缓存才创建）
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:cls];
     if (modelMeta->_hasCustomClassFromDictionary) {
         cls = [cls modelCustomClassForDictionary:dictionary] ?: cls;
