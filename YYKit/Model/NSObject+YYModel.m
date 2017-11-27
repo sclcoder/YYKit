@@ -481,6 +481,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     self = [super init];
     
     // Get black list
+    // 黑名单
     NSSet *blacklist = nil;
     if ([cls respondsToSelector:@selector(modelPropertyBlacklist)]) {
         NSArray *properties = [(id<YYModel>)cls modelPropertyBlacklist];
@@ -490,6 +491,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     
     // Get white list
+    // 白名单
     NSSet *whitelist = nil;
     if ([cls respondsToSelector:@selector(modelPropertyWhitelist)]) {
         NSArray *properties = [(id<YYModel>)cls modelPropertyWhitelist];
@@ -499,6 +501,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     
     // Get container property's generic class
+    // 容器属性中的类型
     NSDictionary *genericMapper = nil;
     if ([cls respondsToSelector:@selector(modelContainerPropertyGenericClass)]) {
         genericMapper = [(id<YYModel>)cls modelContainerPropertyGenericClass];
@@ -508,6 +511,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
                 if (![key isKindOfClass:[NSString class]]) return;
                 Class meta = object_getClass(obj);
                 if (!meta) return;
+                // ?????? 怎样区分是不是MetaClass
                 if (class_isMetaClass(meta)) {
                     tmp[key] = obj;
                 } else if ([obj isKindOfClass:[NSString class]]) {
@@ -525,13 +529,14 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     NSMutableDictionary *allPropertyMetas = [NSMutableDictionary new];
     YYClassInfo *curClassInfo = classInfo;
     while (curClassInfo && curClassInfo.superCls != nil) { // recursive parse super class, but ignore root class (NSObject/NSProxy)
+        // ???????
         for (YYClassPropertyInfo *propertyInfo in curClassInfo.propertyInfos.allValues) {
             if (!propertyInfo.name) continue;
             if (blacklist && [blacklist containsObject:propertyInfo.name]) continue;
             if (whitelist && ![whitelist containsObject:propertyInfo.name]) continue;
             _YYModelPropertyMeta *meta = [_YYModelPropertyMeta metaWithClassInfo:classInfo
                                                                     propertyInfo:propertyInfo
-                                                                         generic:genericMapper[propertyInfo.name]];
+                                                                          generic:genericMapper[propertyInfo.name]];
             if (!meta || !meta->_name) continue;
             if (!meta->_getter || !meta->_setter) continue;
             if (allPropertyMetas[meta->_name]) continue;
@@ -625,19 +630,24 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 }
 
 /// Returns the cached model class meta
+/// 返回缓存model元数据信息
 + (instancetype)metaWithClass:(Class)cls {
     if (!cls) return nil;
     static CFMutableDictionaryRef cache;
     static dispatch_once_t onceToken;
-    static dispatch_semaphore_t lock;
+    static dispatch_semaphore_t lock; // 使用GCD的信号量保证读写Dic时线程安全
     dispatch_once(&onceToken, ^{
+        // 创建一个字典
         cache = CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        // 创建一个信号量 计数为1
         lock = dispatch_semaphore_create(1);
     });
-    dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER); // 等待信号
+    // 从cache字典中获取_YYModelMeta
     _YYModelMeta *meta = CFDictionaryGetValue(cache, (__bridge const void *)(cls));
-    dispatch_semaphore_signal(lock);
+    dispatch_semaphore_signal(lock); // 发送信号
     if (!meta || meta->_classInfo.needUpdate) {
+        // 根据model生成_YYModelMeta
         meta = [[_YYModelMeta alloc] initWithClass:cls];
         if (meta) {
             dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
@@ -1432,17 +1442,22 @@ static NSString *ModelDescription(NSObject *model) {
 @implementation NSObject (YYModel)
 
 + (NSDictionary *)_yy_dictionaryWithJSON:(id)json {
+    // json没有值或为kCFNull 返回nil
     if (!json || json == (id)kCFNull) return nil;
     NSDictionary *dic = nil;
     NSData *jsonData = nil;
     if ([json isKindOfClass:[NSDictionary class]]) {
+        // json数据是NSDictionary类型 直接赋值给dic
         dic = json;
     } else if ([json isKindOfClass:[NSString class]]) {
+        // json数据是NSString类型 转为jsonData
         jsonData = [(NSString *)json dataUsingEncoding : NSUTF8StringEncoding];
     } else if ([json isKindOfClass:[NSData class]]) {
+        // json数据是NSData类型
         jsonData = json;
     }
     if (jsonData) {
+        // 将json转为JSONObject(NSDictionary)   kNilOptions = 0
         dic = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:NULL];
         if (![dic isKindOfClass:[NSDictionary class]]) dic = nil;
     }
@@ -1450,14 +1465,17 @@ static NSString *ModelDescription(NSObject *model) {
 }
 
 + (instancetype)modelWithJSON:(id)json {
+    // json转为dic
     NSDictionary *dic = [self _yy_dictionaryWithJSON:json];
+    // dic转为model
     return [self modelWithDictionary:dic];
 }
 
 + (instancetype)modelWithDictionary:(NSDictionary *)dictionary {
+    // 检测dictionary
     if (!dictionary || dictionary == (id)kCFNull) return nil;
     if (![dictionary isKindOfClass:[NSDictionary class]]) return nil;
-    
+    // 获取类型
     Class cls = [self class];
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:cls];
     if (modelMeta->_hasCustomClassFromDictionary) {

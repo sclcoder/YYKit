@@ -72,17 +72,19 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface NSObject (YYModel)
 
-/**
+/** 将JSON对象转Model 类方法
  Creates and returns a new instance of the receiver from a json.
  This method is thread-safe.
  
  @param json  A json object in `NSDictionary`, `NSString` or `NSData`.
  
  @return A new instance created from the json, or nil if an error occurs.
+ 
+ 可以是字典、字符串、NSData
  */
 + (nullable instancetype)modelWithJSON:(id)json;
 
-/**
+/** 将NSDictionary转为Model 类方法
  Creates and returns a new instance of the receiver from a key-value dictionary.
  This method is thread-safe.
  
@@ -103,7 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable instancetype)modelWithDictionary:(NSDictionary *)dictionary;
 
-/**
+/** 给model赋值json数据 对象方法
  Set the receiver's properties with a json object.
  
  @discussion Any invalid data in json will be ignored.
@@ -115,7 +117,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (BOOL)modelSetWithJSON:(id)json;
 
-/**
+/** 将model赋值dictionary 对象方法
  Set the receiver's properties with a key-value dictionary.
  
  @param dic  A key-value dictionary mapped to the receiver's properties.
@@ -135,7 +137,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (BOOL)modelSetWithDictionary:(NSDictionary *)dic;
 
-/**
+/** 将对象转为JSONObject
  Generate a json object from the receiver's properties.
  
  @return A json object in `NSDictionary` or `NSArray`, or nil if an error occurs.
@@ -147,7 +149,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (nullable id)modelToJSONObject;
 
-/**
+/** 将对象转为JsonData
  Generate a json string's data from the receiver's properties.
  
  @return A json string's data, or nil if an error occurs.
@@ -158,7 +160,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (nullable NSData *)modelToJSONData;
 
-/**
+/** 将对象转为JsonString
  Generate a json string from the receiver's properties.
  
  @return A json string, or nil if an error occurs.
@@ -169,21 +171,21 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (nullable NSString *)modelToJSONString;
 
-/**
+/** 赋值一份model
  Copy a instance with the receiver's properties.
  
  @return A copied instance, or nil if an error occurs.
  */
 - (nullable id)modelCopy;
 
-/**
+/** Encode
  Encode the receiver's properties to a coder.
  
  @param aCoder  An archiver object.
  */
 - (void)modelEncodeWithCoder:(NSCoder *)aCoder;
 
-/**
+/** Decode
  Decode the receiver's properties from a decoder.
  
  @param aDecoder  An archiver object.
@@ -224,7 +226,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface NSArray (YYModel)
 
-/**
+/** 通过json-array创建model-array
  Creates and returns an array from a json-array.
  This method is thread-safe.
  
@@ -245,7 +247,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface NSDictionary (YYModel)
 
-/**
+/** 通过json创建一个model-dic
  Creates and returns a dictionary from a json.
  This method is thread-safe.
  
@@ -268,7 +270,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol YYModel <NSObject>
 @optional
 
-/**
+/** 自定义属性映射关系--可以映射嵌套关系
  Custom property mapper.
  
  @discussion If the key in JSON/Dictionary does not match to the model's property name,
@@ -309,7 +311,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSDictionary<NSString *, id> *)modelCustomPropertyMapper;
 
-/**
+/** 定义容器中属性与一般类的映射关系
  The generic class mapper for container properties.
  
  @discussion If the property is a container object, such as NSArray/NSSet/NSDictionary,
@@ -340,7 +342,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSDictionary<NSString *, id> *)modelContainerPropertyGenericClass;
 
-/**
+/** 根据dic创建不同的对象模型
  If you need to create instances of different classes during json->object transform,
  use the method to choose custom class based on dictionary data.
  
@@ -376,7 +378,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable Class)modelCustomClassForDictionary:(NSDictionary *)dictionary;
 
-/**
+/** 黑名单的属性在转换过程中将被忽略
  All the properties in blacklist will be ignored in model transform process.
  Returns nil to ignore this feature.
  
@@ -384,7 +386,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSArray<NSString *> *)modelPropertyBlacklist;
 
-/**
+/** 不在白名单中的属性在转换中将被忽略 返回nil关闭此功能
  If a property is not in the whitelist, it will be ignored in model transform process.
  Returns nil to ignore this feature.
  
@@ -392,7 +394,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSArray<NSString *> *)modelPropertyWhitelist;
 
-/**
+/** 在转换之前回调 --- 此时可以改变dic的内容
  This method's behavior is similar to `- (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic;`, 
  but be called before the model transform.
  
@@ -406,7 +408,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (NSDictionary *)modelCustomWillTransformFromDictionary:(NSDictionary *)dic;
 
-/**
+/** dic->model 可以针对转换做附加处理  在转换结束后调用
  If the default json-to-model transform does not fit to your model object, implement
  this method to do additional process. You can also use this method to validate the 
  model's properties.
@@ -421,7 +423,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic;
 
-/**
+/** model->dic 可以针对转换做附加处理  在转换结束后调用
  If the default model-to-json transform does not fit to your model class, implement
  this method to do additional process. You can also use this method to validate the
  json dictionary.
