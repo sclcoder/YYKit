@@ -18,9 +18,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-
-
-    
     
     self.title = @"YYKit Example";
     self.titles = @[].mutableCopy;

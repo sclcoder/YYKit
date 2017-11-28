@@ -450,20 +450,19 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
         // 如果是其它oc类型，用类型去判断是否需要类型转换
         meta->_hasCustomClassFromDictionary = [meta->_cls respondsToSelector:@selector(modelCustomClassForDictionary:)];
     }
-    
+    // 设置getter方法
     if (propertyInfo.getter) {
-        // 这个类的对象能否响应属性的getter方法
         if ([classInfo.cls instancesRespondToSelector:propertyInfo.getter]) {
             meta->_getter = propertyInfo.getter;
         }
     }
+    // 设置setter方法
     if (propertyInfo.setter) {
-        // 这个类的对象能否响应属性的setter方法
         if ([classInfo.cls instancesRespondToSelector:propertyInfo.setter]) {
             meta->_setter = propertyInfo.setter;
         }
     }
-    
+    // 如果包含getter和setter方法
     if (meta->_getter && meta->_setter) {
         /*
          KVC invalid type:
@@ -592,7 +591,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     
     
     // Create all property metas. 所有属性的元数据
-    // 2.获取这个类的所有属性的元数据
+    // 2.获取这个类的所有属性的元数据(包括父类)
     NSMutableDictionary *allPropertyMetas = [NSMutableDictionary new];
     YYClassInfo *curClassInfo = classInfo;
     while (curClassInfo && curClassInfo.superCls != nil) {
@@ -661,7 +660,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
                 propertyMeta->_mappedToKey = mappedToKey;
                
                 NSArray *keyPath = [mappedToKey componentsSeparatedByString:@"."];
-                // ？？？？
+                // 容错处理  像"ext."这种情况
                 for (NSString *onePath in keyPath) {
                     if (onePath.length == 0) {
                         NSMutableArray *tmp = keyPath.mutableCopy;
@@ -721,8 +720,8 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     /***************** modelCustomPropertyMapper - end  ****************/
 
-    // 注意此时已将自定义属性和key的映射关系的propertyMeta从allPropertyMetas中移除了
-    // 属性值和key不存在映射的情况
+    // 注意此时已将这个类 自定义属性和key的映射关系的propertyMeta从allPropertyMetas中移除了
+    // 属性值和key不存在自定义映射的情况
     [allPropertyMetas enumerateKeysAndObjectsUsingBlock:^(NSString *name, _YYModelPropertyMeta *propertyMeta, BOOL *stop) {
         propertyMeta->_mappedToKey = name;
         propertyMeta->_next = mapper[name] ?: nil;
