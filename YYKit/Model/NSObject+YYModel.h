@@ -270,7 +270,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol YYModel <NSObject>
 @optional
 
-/** 自定义属性映射关系--可以映射嵌套关系
+/** 自定义属性映射关系--可以多级映射
  Custom property mapper.
  
  @discussion If the key in JSON/Dictionary does not match to the model's property name,
@@ -301,8 +301,8 @@ NS_ASSUME_NONNULL_BEGIN
         + (NSDictionary *)modelCustomPropertyMapper {
             return @{@"name"  : @"n",
                      @"page"  : @"p",
-                     @"desc"  : @"ext.desc",
-                     @"bookID": @[@"id", @"ID", @"book_id"]};
+                     @"desc"  : @"ext.desc", // 多级映射
+                     @"bookID": @[@"id", @"ID", @"book_id"]}; // 还可以这样
         }
         @end
     @endcode
@@ -331,9 +331,9 @@ NS_ASSUME_NONNULL_BEGIN
  
         @implementation YYAttributes
         + (NSDictionary *)modelContainerPropertyGenericClass {
-            return @{@"shadows" : [YYShadow class],
+            return @{@"shadows" : [YYShadow class], // 类的形式
                      @"borders" : YYBorder.class,
-                     @"attachments" : @"YYAttachment" };
+                     @"attachments" : @"YYAttachment" }; // 字符串形式
         }
         @end
  @endcode
