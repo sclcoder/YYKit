@@ -395,7 +395,7 @@ NS_ASSUME_NONNULL_BEGIN
  */
 + (nullable NSArray<NSString *> *)modelPropertyWhitelist;
 
-/** 在转换之前回调 --- 此时可以改变dic的内容
+/** 在转换之前回调 - 此时可以改变dic的内容
  This method's behavior is similar to `- (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic;`, 
  but be called before the model transform.
  
@@ -406,10 +406,31 @@ NS_ASSUME_NONNULL_BEGIN
  @param dic  The json/kv dictionary.
  
  @return Returns the modified dictionary, or nil to ignore this model.
+ 
+ xinterface YYTestCustomTransformModel : NSObject
+    @property uint64_t id;
+    @property NSString *content;
+    @property NSDate *time;
+ @end
+ 
+ -(NSDictionary *)modelCustomWillTransformFromDictionary:(NSDictionary *)dic{
+    if (dic) {
+        NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:dic];
+    if (dict[@"date"]) {
+        dict[@"time"] = dict[@"date"]; // 改变字典
+    }
+        return dict;
+    }
+        return dic;
+ }
  */
 - (NSDictionary *)modelCustomWillTransformFromDictionary:(NSDictionary *)dic;
 
-/** dic->model 可以针对转换做附加处理  在转换结束后调用
+/** dic->model
+ 当JSON 转为 Model 完成后，该方法会被调用。
+ 你可以在这里对数据进行校验，如果校验不通过，可以返回 NO，则该 Model 会被忽略。
+你也可以在这里做一些自动转换不能完成的工作。
+
  If the default json-to-model transform does not fit to your model object, implement
  this method to do additional process. You can also use this method to validate the 
  model's properties.
@@ -422,6 +443,30 @@ NS_ASSUME_NONNULL_BEGIN
  
  @return Returns YES if the model is valid, or NO to ignore this model.
  */
+/**
+ // JSON:
+ {
+    "name":"Harry",
+    "timestamp" : 1445534567
+ }
+ 
+ // Model:
+ xinterface User
+    @property NSString *name;
+    @property NSDate *createdAt;
+ @end
+ 
+ @implementation User
+
+ - (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic {
+ 
+    NSNumber *timestamp = dic[@"timestamp"];
+    if (![timestamp isKindOfClass:[NSNumber class]]) return NO;
+        _createdAt = [NSDate dateWithTimeIntervalSince1970:timestamp.floatValue];
+    return YES;
+ }
+ */
+
 - (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic;
 
 /** model->dic 可以针对转换做附加处理  在转换结束后调用
