@@ -426,6 +426,10 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (NSDictionary *)modelCustomWillTransformFromDictionary:(NSDictionary *)dic;
 
+
+
+
+
 /** dic->model
  当JSON 转为 Model 完成后，该方法会被调用。
  你可以在这里对数据进行校验，如果校验不通过，可以返回 NO，则该 Model 会被忽略。
@@ -466,8 +470,16 @@ NS_ASSUME_NONNULL_BEGIN
     return YES;
  }
  */
-
+// dic2model转换完成后 自定义转换
 - (BOOL)modelCustomTransformFromDictionary:(NSDictionary *)dic;
+
+
+
+
+
+
+
+
 
 /** model->dic 可以针对转换做附加处理  在转换结束后调用
  If the default model-to-json transform does not fit to your model class, implement
